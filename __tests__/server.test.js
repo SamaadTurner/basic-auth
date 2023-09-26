@@ -1,9 +1,10 @@
 'use strict';
 
-const { app } = require('../src/server');
+const { app } = require('../server');
 const supertest = require('supertest');
 const mockRequest = supertest(app);
 const { sequelizeDatabase } = require('../src/auth/models');
+//const handle500Error = require('../src/auth/middleware/500');
 
 beforeAll( async () => {
   await sequelizeDatabase.sync();

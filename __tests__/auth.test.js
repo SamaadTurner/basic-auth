@@ -1,8 +1,9 @@
 'use strict';
 
 const supertest = require('supertest');
-const { app } = require('../src/server');
+const { app } = require('../server');
 const { sequelizeDatabase } = require('../src/auth/models');
+const base64 = require('base-64');
 
 const request = supertest(app);
 
@@ -16,19 +17,24 @@ afterAll( async () => {
 
 describe('Auth routes', (() => {
   test('allow for user sign up', async () => {
-    const response = await request.post('/signup').send({
+    let response = await request.post('/signup').send({
       username: 'samaad',
-      password: 'samaadturner23',
+      password: 'test',
     });
 
-    expect(response.status).toEqual(201);
-    expect(response.body.username).toEqual('samaad');
+    expect(response.status).toBe(201);
+    expect(response.body.username).toBe('samaad');
   });
+  test('Should be able to login in an existing user', async () => {
+    let encodedCredentials = base64.encode('samaad:test');
 
-  test('allow for sign in', async () => {
-    const response = await request.post('/signin').set('Authorization', 'Basic SWtlOnBhc3M=');
+    let response = await request.post('/signin').set({
+      Authorization: `Basic ${encodedCredentials}`,
+    });
 
-    expect(response.status).toEqual(200);
-    expect(response.body.username).toEqual('samaad');
+    expect(response.status).toBe(200);
+    expect(response.body.username).toBe('samaad');
   });
+  
+
 }));

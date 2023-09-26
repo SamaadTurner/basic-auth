@@ -1,33 +1,34 @@
 'use strict';
 
-const express = require('express');
 const bcrypt = require('bcrypt');
 
-const router = express.Router();
 const { userModel } = require('./models/index');
-const basicAuth = require('./middleware/basic');
 
-// Signup Route -- create a new user
-// Two ways to test this route with httpie
-// echo '{"username":"john","password":"foo"}' | http post :3000/signup
-// http post :3000/signup username=john password=foo
-router.post('/signup', async (req, res) => {
+async function handleSignup(req, res, next) {
   try {
-    req.body.password = await bcrypt.hash(req.body.password, 10);
     const record = await userModel.create(req.body);
     res.status(201).json(record);
   } catch (e) { res.status(403).send('Error Creating User'); }
-});
-  
+}
 
-// Signin Route -- login with username and password
-// test with httpie
-// http post :3000/signin -a john:foo
-router.post('/signin', basicAuth, async (req, res, next) => {
+async function handleSignin(req, res, next) {
+  // console.log('router.js: Signing IN', req.path);
+  // console.log(req.username, req.password)
+
   try {
-    res.status(200).json(req.user);
-  } catch (error) { next('Invalid Login. Message: ', error.message);
-  }
-});
+    const user = await userModel.findOne({ where: { username: req.username } });
+    const valid = await bcrypt.compare(req.password, user.password);
+    if (valid) {
+      res.status(200).json(user);
+    }
+    else {
+      throw new Error('Invalid User');
+    }
+  } catch (error) { res.status(403).send('Invalid Login'); }
 
-module.exports = router;
+}
+
+module.exports = {
+  handleSignup,
+  handleSignin,
+};
